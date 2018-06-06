@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jank.orm.mapper.RoleMapper">
+    <resultMap id="roleResultMap" type="Role">
+        <id property="id" column="id" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="code" column="code" />
+        <result property="name" column="name" />
+        <result property="isDelete" column="is_delete" />
+        <collection property="permissions" ofType="Permission">
+            <result property="id" column="pid" />
+            <result property="code" column="pcode" />
+            <result property="name" column="pname" />
+        </collection>
+    </resultMap>
+
+    <select id="selectAll" resultMap="roleResultMap">
+        SELECT
+          t1.id,
+          t1.create_time,
+          t1.update_time,
+          t1.code,
+          t1.name,
+          t3.id AS pid,
+          t3.code AS pcode,
+          t3.name AS pname
+        FROM
+          t_role t1
+          LEFT JOIN
+          t_role_permission t2
+          ON t1.id = t2.role_id
+          LEFT JOIN
+          t_permission t3
+          ON t2.permission_id = t3.id
+        WHERE !t1.is_delete
+        ORDER BY t1.code ASC
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_role ( create_time, code, name)
+        VALUES ( NOW(), #{code}, #{name})
+    </insert>
+
+    <insert id="updatePermissions">
+        UPDATE t_role SET update_time = NOW() WHERE id = #{id};
+        DELETE FROM t_role_permission WHERE role_id = #{id};
+        <if test="permissions != null and permissions.size() > 0">
+            INSERT INTO t_role_permission (role_id, permission_id)
+            VALUES
+              <foreach collection="permissions" item="p" separator=",">
+                  (#{id}, #{p.id})
+              </foreach>
+        </if>
+    </insert>
+
+    <update id="update">
+        UPDATE t_role
+        <set>
+            update_time = NOW(),
+            <if test="code != null and code != ''">
+                code = #{code},
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM t_role WHERE id = #{id};
+        DELETE FROM t_role_permission WHERE role_id = #{id};
+    </delete>
+
+    <select id="selectByUser" resultMap="roleResultMap">
+        SELECT
+          t2.id,
+          t2.create_time,
+          t2.update_time,
+          t2.code,
+          t2.name,
+          t4.id AS pid,
+          t4.code AS pcode,
+          t4.name AS pname
+        FROM
+          t_user t1
+          JOIN
+          t_role t2 ON t1.role = t2.id
+          LEFT JOIN
+          t_role_permission t3
+          ON t2.id = t3.role_id
+          LEFT JOIN
+          t_permission t4
+          ON t3.permission_id = t4.id
+        WHERE t1.id = #{userId}
+    </select>
+
+    <select id="selectByCode" resultMap="roleResultMap">
+        SELECT
+          t1.id,
+          t1.create_time,
+          t1.update_time,
+          t1.code,
+          t1.name,
+          t3.id AS pid,
+          t3.code AS pcode,
+          t3.name AS pname
+        FROM
+          t_role t1
+          LEFT JOIN
+          t_role_permission t2
+          ON t1.id = t2.role_id
+          LEFT JOIN
+          t_permission t3
+          ON t2.permission_id = t3.id
+        WHERE t1.code = #{code}
+    </select>
+
+    <insert id="insertPermissions">
+        INSERT INTO t_role_permission (role_id, permission_id)
+        VALUES
+          <foreach collection="permissions" item="p" separator=",">
+              (#{id}, #{p.id})
+          </foreach>
+    </insert>
+</mapper>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jank.orm.mapper.PermissionMapper">
+    <resultMap id="permissionResultMap" type="Permission">
+        <id property="id" column="id" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="code" column="code" />
+        <result property="name" column="name" />
+        <result property="isDelete" column="is_delete" />
+    </resultMap>
+
+    <select id="selectAll" resultMap="permissionResultMap">
+        SELECT id, create_time, update_time, code, name FROM t_permission
+         WHERE !is_delete ORDER BY code ASC
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_permission ( create_time, code, name)
+        VALUES ( NOW(), #{code}, #{name})
+    </insert>
+
+    <insert id="insertList">
+        INSERT INTO t_permission ( create_time, code, name)
+        VALUES
+            <foreach collection="list" item="item" separator=",">
+                ( NOW(), #{item.code}, #{item.name})
+            </foreach>
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM t_permission
+        <where>
+            id = #{id}
+            <if test="code != null and code != ''">
+                OR code = #{code}
+            </if>
+        </where>
+    </delete>
+</mapper>
